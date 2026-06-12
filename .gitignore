@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+artifacts/*.parquet
+artifacts/*.keras
+artifacts/*.joblib
+data/creditcard.csv
+venv/
