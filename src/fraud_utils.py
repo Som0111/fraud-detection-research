@@ -38,6 +38,7 @@ RANDOM_STATE = 42
 _REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PATH = os.path.join(_REPO_ROOT, "data", "creditcard.csv")
 ARTIFACTS_DIR = os.path.join(_REPO_ROOT, "artifacts")
+os.makedirs(ARTIFACTS_DIR, exist_ok=True)
 
 
 # --------------------------------------------------------------------------
@@ -264,14 +265,24 @@ def evaluate_scores(y_true, y_score, threshold: float = 0.5) -> dict:
     y_true = np.asarray(y_true)
     y_score = np.asarray(y_score)
     y_pred = (y_score >= threshold).astype(int)
-    return {
-        "accuracy": accuracy_score(y_true, y_pred),
-        "precision": precision_score(y_true, y_pred, zero_division=0),
-        "recall": recall_score(y_true, y_pred, zero_division=0),
-        "f1": f1_score(y_true, y_pred, zero_division=0),
-        "auc_roc": roc_auc_score(y_true, y_score),
-        "auc_pr": average_precision_score(y_true, y_score),
-    }
+ try:
+    auc_roc = roc_auc_score(y_true, y_score)
+except ValueError:
+    auc_roc = np.nan
+
+try:
+    auc_pr = average_precision_score(y_true, y_score)
+except ValueError:
+    auc_pr = np.nan
+
+return {
+    "accuracy": accuracy_score(y_true, y_pred),
+    "precision": precision_score(y_true, y_pred, zero_division=0),
+    "recall": recall_score(y_true, y_pred, zero_division=0),
+    "f1": f1_score(y_true, y_pred, zero_division=0),
+    "auc_roc": auc_roc,
+    "auc_pr": auc_pr,
+}
 
 
 def temporal_split(df: pd.DataFrame, train_months, test_months):
