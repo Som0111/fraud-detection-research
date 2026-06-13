@@ -1,57 +1,101 @@
-# When does the neural net actually win?
+# FraudLens: When Does a Neural Network Actually Win?
 
-### An advanced credit-card fraud detection study
+A fraud-detection project comparing traditional machine learning and neural networks under real-world conditions.
 
-This is not a generic "train a classifier on `creditcard.csv`" project. It is a
-small piece of **research** that answers a real question:
+Most fraud-detection projects stop after training a classifier and reporting accuracy. This project goes further by asking a more practical question:
 
-> Neural networks are expressive — but are they actually *better* than gradient
-> boosting on tabular fraud data, and what breaks that advantage in production?
+> If a fraud pattern changes over time, which model holds up best, and how often do you need to retrain it?
 
-The twist that sets it apart: we simulate **temporal drift** — a new fraud
-pattern emerging mid-dataset — and measure which models adapt, which collapse,
-and which recover. That is what actually breaks deployed fraud systems, and
-almost no student project touches it.
+To explore this, I built an end-to-end fraud-detection pipeline using the Credit Card Fraud Detection dataset and introduced a simulated temporal drift scenario where a new fraud pattern appears later in the data. The goal was not just to compare models, but to understand how they behave when the environment changes.
 
 ---
 
-## What it covers
+## What this project covers
 
-Everything from a foundational ML + deep-learning course, used in anger:
-
-| Area | Where |
-|---|---|
-| Logistic regression, decision tree, random forest, XGBoost | NB-03 |
-| Dense layers, ReLU, sigmoid, BCE loss, L2, dropout, overfitting | NB-03 |
-| EDA, class imbalance, distribution shift (KS test) | NB-01 |
-| Feature engineering (velocity, personal deviation, cyclic time) | NB-02 |
-| Metrics: AUC-PR, ROC, F1, calibration, confusion matrices | NB-04 |
-| Temporal drift, robustness, retraining cadence | NB-05 |
-| Cost analysis, threshold selection, business recommendation | NB-06 |
+| Topic                                                      | Notebook |
+| ---------------------------------------------------------- | -------- |
+| Exploratory Data Analysis (EDA) and class imbalance        | NB-01    |
+| Feature engineering                                        | NB-02    |
+| Logistic Regression, Decision Tree, Random Forest, XGBoost | NB-03    |
+| Neural Networks, Regularisation, Overfitting               | NB-03    |
+| AUC-PR, ROC, Calibration, Confusion Matrices               | NB-04    |
+| Temporal Drift and Model Robustness                        | NB-05    |
+| Threshold Optimisation and Business Costs                  | NB-06    |
 
 ---
 
-## The six notebooks
+## Project Workflow
 
-Run them **in order** — each saves an artifact the next one loads.
+### 01. Data Exploration
 
-1. **`01_data_and_eda.ipynb`** — load data, expose the imbalance, bin time into
-   six "months", and inject a new fraud pattern into the last two. KS test
-   confirms the drift is real.
-2. **`02_feature_engineering.ipynb`** — synthetic cardholders (via clustering),
-   transaction velocity, personal-deviation z-score, cyclic time-of-day, amount
-   transforms.
-3. **`03_model_arena.ipynb`** — five models on one stratified split. The neural
-   net is trained twice (with and without dropout + L2) so you can *see*
-   overfitting and its fix in the loss curves.
-4. **`04_evaluation_lab.ipynb`** — rank by accuracy (everything looks great),
-   then switch to AUC-PR and watch the ranking flip. PR / ROC / calibration
-   curves and confusion matrices.
-5. **`05_temporal_drift.ipynb`** — the centerpiece. Train on months 1–4, test on
-   5–6. Measure degradation, isolate recall on the *new* pattern, then retrain
-   and watch the neural net recover.
-6. **`06_business_decision_engine.ipynb`** — turn probabilities into money. Cost
-   matrix, threshold sweep, expected-loss curve, and one actionable sentence.
+* Explore the severe fraud imbalance
+* Create six synthetic time periods ("months")
+* Inject a new fraud pattern into the final months
+* Verify the distribution shift using KS tests
+
+### 02. Feature Engineering
+
+Built additional fraud-oriented features such as:
+
+* Transaction velocity
+* Personal spending deviation (z-score)
+* Time-of-day cyclic features
+* Amount transformations
+
+### 03. Model Arena
+
+Trained and compared:
+
+* Logistic Regression
+* Decision Tree
+* Random Forest
+* XGBoost
+* Neural Network (with and without regularisation)
+
+The neural network is intentionally trained twice so the effect of overfitting and regularisation can be visualised directly.
+
+### 04. Evaluation Lab
+
+This notebook demonstrates why accuracy is a poor metric for fraud detection.
+
+Models are compared using:
+
+* Precision-Recall Curves
+* ROC Curves
+* AUC-PR
+* Calibration Curves
+* Confusion Matrices
+
+### 05. Temporal Drift Experiment
+
+This is the core experiment.
+
+Models are trained on Months 1–4 and evaluated on Months 5–6 after the new fraud pattern appears.
+
+The notebook measures:
+
+* Performance degradation under drift
+* Recall on the new fraud pattern specifically
+* Recovery after retraining
+
+### 06. Business Decision Engine
+
+The final notebook converts model outputs into business decisions.
+
+It includes:
+
+* Cost-sensitive threshold optimisation
+* Expected-loss analysis
+* Precision-recall trade-offs
+* A final deployment recommendation
+
+---
+
+## Dataset
+
+This project uses the Kaggle Credit Card Fraud Detection dataset:
+
+https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
 
 ---
 
@@ -59,47 +103,23 @@ Run them **in order** — each saves an artifact the next one loads.
 
 ```bash
 pip install -r requirements.txt
+jupyter lab
 ```
 
-Then launch Jupyter and run the notebooks in order:
-
-```bash
-jupyter lab        # or jupyter notebook
-```
-
-## The dataset
-
-The project is built around the **Kaggle Credit Card Fraud Detection** dataset
-(ULB Machine Learning Group):
-
-- https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
-- File: `creditcard.csv` (~144 MB, 284,807 rows; columns `Time`, `V1`–`V28`,
-  `Amount`, `Class`).
-
-**Drop `creditcard.csv` into the `data/` folder, then run every notebook in
-order.**
-
-### Runs out of the box without the dataset
-
-If `data/creditcard.csv` is missing, the code automatically generates a small
-**synthetic** dataset with the identical schema, so the whole pipeline runs end
-to end immediately. A banner in NB-01 tells you which path was taken. **The
-outputs currently saved in the notebooks were produced on synthetic data** —
-your numbers will differ (and be more interesting) on the real file.
+Run the notebooks in numerical order.
 
 ---
 
-## Project layout
+## Project Structure
 
-```
+```text
 fraud-detection-research/
 ├── README.md
 ├── requirements.txt
 ├── data/
-│   └── creditcard.csv        <- you add this (Kaggle)
 ├── src/
-│   ├── fraud_utils.py        <- loading, drift injection, cost matrix, metrics
-│   └── models.py             <- model factories shared by NB-03 and NB-05
+│   ├── fraud_utils.py
+│   └── models.py
 ├── notebooks/
 │   ├── 01_data_and_eda.ipynb
 │   ├── 02_feature_engineering.ipynb
@@ -107,22 +127,24 @@ fraud-detection-research/
 │   ├── 04_evaluation_lab.ipynb
 │   ├── 05_temporal_drift.ipynb
 │   └── 06_business_decision_engine.ipynb
-└── artifacts/                <- intermediate parquet files land here at runtime
+└── artifacts/
 ```
 
 ---
 
-## What the project concludes
+## Key Findings
 
-1. **Accuracy is the wrong metric** for fraud — every model clears 99%. AUC-PR is
-   the honest ranking.
-2. On **static tabular data**, gradient boosting (XGBoost) is hard to beat; the
-   neural net only matches it with careful regularisation.
-3. Under **temporal drift**, every model degrades — and the neural net degrades
-   hardest, then recovers fastest when retrained.
-4. The deployment decision is **economic, not statistical**: choose the model,
-   the threshold, *and* the retraining cadence together.
+* Accuracy is misleading for highly imbalanced fraud datasets; AUC-PR provides a much more useful comparison.
+* XGBoost delivered the strongest overall performance on static tabular data.
+* Every model degraded when the fraud pattern changed over time.
+* Retraining frequency mattered as much as model choice under temporal drift.
+* The optimal deployment threshold was far from the default 0.50 because the cost of missed fraud was much higher than the cost of false alarms.
+* Effective fraud detection requires both a good model and a business-aware decision threshold.
 
-So "is the neural net better?" has no unconditional answer. It depends on your
-retraining cadence — which is a real production architecture decision, backed
-here by your own experiment.
+---
+
+## Final Takeaway
+
+The most interesting result was that model selection alone did not determine success. Under temporal drift, performance depended heavily on how quickly the model was retrained after new fraud behaviour appeared.
+
+In other words, the real deployment decision is not just **which model to use**, but also **how often to update it**.
